@@ -9,34 +9,30 @@ import { useRouter } from 'next/navigation';
 const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [signInWithEmailAndPassword] = useSignInWithEmailAndPassword(auth);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [signInWithEmailAndPassword, loading, error] = useSignInWithEmailAndPassword(auth);
   const router = useRouter();
 
   const handleSignIn = async () => {
     try {
       const res = await signInWithEmailAndPassword(email, password);
       if (res.user) {
-        // Firebase generates a JWT token
         const idToken = await res.user.getIdToken(); // Get the ID token (JWT)
-        
-        // Store the JWT token in sessionStorage (or localStorage)
-        sessionStorage.setItem('userToken', idToken); 
+        sessionStorage.setItem('userToken', idToken); // Store JWT token
 
-      
-        // Optionally, you can store the user state in sessionStorage or other storage
+        // Optionally store the user state
         sessionStorage.setItem('user', JSON.stringify(res.user));
-        const userDetails = JSON.parse(sessionStorage.getItem('user'));
-        console.log('User Email:', userDetails.email);
-        // Reset form fields
-        setEmail('');
-        setPassword('');
         
         // Redirect to home page after sign-in
-         
+        router.push('/');
       }
     } catch (e) {
       console.error('Error signing in:', e);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(!isPasswordVisible);
   };
 
   return (
@@ -58,6 +54,8 @@ const SignIn = () => {
       {/* Sign-In Box */}
       <div className="bg-gray-800 bg-opacity-80 p-10 rounded-lg shadow-xl w-[90%] sm:w-[50%] lg:w-[30%] h-[50%] flex flex-col justify-center z-10">
         <h1 className="text-white text-2xl mb-5 text-center">Sign In</h1>
+        
+        {/* Email Input */}
         <input
           type="email"
           placeholder="Email"
@@ -65,21 +63,84 @@ const SignIn = () => {
           onChange={(e) => setEmail(e.target.value)}
           className="w-full p-3 mb-4 bg-gray-700 rounded text-base sm:text-lg lg:text-xl outline-none text-white placeholder-gray-500"
         />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-3 mb-4 bg-gray-700 rounded text-base sm:text-lg lg:text-xl outline-none text-white placeholder-gray-500"
-        />
+        
+        {/* Password Input */}
+        <div className="relative">
+          <input
+            type={isPasswordVisible ? 'text' : 'password'} // Toggle password visibility
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-3 mb-4 bg-gray-700 rounded text-base sm:text-lg lg:text-xl outline-none text-white placeholder-gray-500"
+          />
+          <button
+            type="button"
+            onClick={togglePasswordVisibility}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black"
+          >
+            {isPasswordVisible ? (
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 12m-3 0a3 3 0 1 0 6 0 3 3 0 1 0-6 0"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M2.458 12C3.732 7.943 7.732 5 12 5s8.268 2.943 9.542 7c-.274.845-.72 1.63-1.292 2.308M12 19c-4.268 0-8.268-2.943-9.542-7 1.274-.678 1.72-1.463 1.292-2.308"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 12m-3 0a3 3 0 1 0 6 0 3 3 0 1 0-6 0"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M2.458 12C3.732 7.943 7.732 5 12 5s8.268 2.943 9.542 7c-.274.845-.72 1.63-1.292 2.308M12 19c-4.268 0-8.268-2.943-9.542-7 1.274-.678 1.72-1.463 1.292-2.308"
+                />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {/* Sign In Button */}
         <button
           onClick={handleSignIn}
-          className="w-full p-3 bg-orange-500 rounded text-white hover:bg-orange-400"
+          disabled={loading}
+          className="w-full p-3 bg-orange-500 rounded text-white hover:bg-orange-400 disabled:bg-orange-300"
         >
-          Sign In
+          {loading ? 'Signing In...' : 'Sign In'}
         </button>
-        <h1 className='text-white text-xl'>
-          Don't have an account? <Link className='text-orange-500 hover:text-orange-300' href="/sign-up">Sign-Up</Link>
+
+        {/* Error Message */}
+        {error && <p className="text-red-500 text-center mt-2">{error.message}</p>}
+
+        <h1 className="text-white text-xl  mt-3">
+          Don't have an account?{' '}
+          <Link className="text-orange-500 hover:text-orange-300" href="/sign-up">
+            Sign-Up
+          </Link>
         </h1>
       </div>
     </div>
